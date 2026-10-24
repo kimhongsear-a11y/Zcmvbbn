@@ -1,0 +1,249 @@
+🎯 What is this?
+
+RITHTOPUP lets customers buy Diamonds / UC / Genesis Crystals / game passes using a single KHQR code scannable by every major Cambodian bank app — ABA Pay, ACLEDA Pay, Wing, TrueMoney, Chip Mong, Prince Bank, and more.
+Customer side	Admin side
+Browse featured games	Manage games, products, orders
+Pick a package + enter UID	Approve / fulfil / refund orders
+Pay via KHQR (180s expiry)	Hero banners, FAQ, blog, banlist
+Track status live (3s poll)	Revenue chart, customers, audit log
+Download branded PDF invoice	Telegram notifications on new orders
+✨ Features
+
+	
+🧱 Tech stack
+
+Next.js 14 (App Router)  ·  React 18  ·  TypeScript (strict)
+Prisma 5  ·  PostgreSQL (dev + prod)
+Tailwind CSS 3  ·  lucide-react icons
+jose (JWT)  ·  bcryptjs  ·  pdfkit  ·  zod
+
+
+⚡ Quick start (5 minutes)
+
+Requires Node.js 20+, npm, and a Postgres database (free: Neon / Supabase).
+1. Clone & install
+
+git clone https://github.com/angkerith1/rithtopup-site.git
+cd rithtopup-site
+npm install
+
+2. Create your .env
+
+cp .env.example .env
+
+Open .env and set at minimum:
+DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
+JWT_SECRET="$(openssl rand -base64 32)"
+ADMIN_EMAIL="you@example.com"
+ADMIN_PASSWORD="YourStrongPassword!"
+PAYMENT_SIMULATION_MODE="true"
+
+For Windows PowerShell, generate JWT_SECRET with:
+-join ((1..48) | ForEach-Object { [char[]](48..57+65..90+97..122) | Get-Random })
+
+💡 Get a free Postgres URL in 30 seconds from neon.tech — pick Create Project and copy the connection string shown.
+3. Set up the database
+
+npx prisma generate
+npx prisma db push
+npm run db:seed
+
+The seed creates your first admin account using ADMIN_EMAIL + ADMIN_PASSWORD, plus a few demo games.
+4. Run it
+
+npm run dev
+
+Open http://localhost:3000 — storefront. Open http://localhost:3000/admin/login — admin panel.
+✅ That's it. In simulation mode, paying for an order auto-completes after 3 seconds so you can test the full flow without KHPay credentials.
+
+✅ Full setup checklist (recommended)
+
+Use this sequence for first-time setup to avoid deployment and login errors.
+A) Local development
+
+	1.	Install dependencies:
+npm install
+
+	1.	Create .env from .env.example and set:
+	•	DATABASE_URL
+	•	JWT_SECRET (32+ chars)
+	•	ADMIN_EMAIL
+	•	ADMIN_PASSWORD
+	•	PAYMENT_SIMULATION_MODE=true(for local testing)
+	2.	Initialize database:
+npx prisma db push
+npm run db:seed
+
+	4.	Start app:
+npm run dev
+
+	1.	Verify:
+	•	Storefront: http://localhost:3000
+	•	Admin login: http://localhost:3000/admin/login
+B) Production (Vercel + Neon)
+
+	1.	Add all environment variables in Vercel (Production + Preview + Development).
+	2.	Ensure:
+	•	PAYMENT_SIMULATION_MODE=false
+	•	KHPAY_API_KEY is set
+	•	NEXT_PUBLIC_BASE_URL and PUBLIC_APP_URL are your live domain
+	3.	From your laptop, run schema + seed against production DB:
+# set DATABASE_URL to your production postgres url first
+npx prisma db push
+npm run db:seed
+
+	4.	Redeploy Vercel without cache.
+	5.	Create a real test order and verify:
+	•	QR appears (not simulation)
+	•	Admin login works
+	•	Order status updates
+C) Security hardening (must-do)
+
+	1.	Rotate any leaked DB/API credentials immediately.
+	2.	Change seeded admin password after first login.
+	3.	Never commit .env.
+	4.	Keep PAYMENT_SIMULATION_MODE=false in production.
+
+🚀 Deploy to Vercel
+
+Step 1 — Create a Postgres database
+
+If you haven't already (see Quick Start), pick one — all have free tiers:
+	•	Neon — recommended, instant setup
+	•	Supabase · Vercel Postgres
+Copy the connection string (must end with ?sslmode=require).
+Step 2 — Import the repo into Vercel
+
+	1.	Go to vercel.com/new
+	2.	Import angkerith1/rithtopup-site
+	3.	Framework preset: Next.js (auto-detected)
+	4.	Build Command: leave as default (npm run build). Do not add prisma db push — run schema pushes from your laptop only.
+	5.	Do not deploy yet — add environment variables first ↓
+Step 3 — Add environment variables
+
+In Vercel → Settings → Environment Variables, add for Production + Preview:
+	
+	
+	
+	
+	
+	
+	
+Variable	Example / how to get it
+DATABASE_URL	Your Postgres connection string
+JWT_SECRET	Run openssl rand -base64 32
+ADMIN_EMAIL	Your admin login email
+ADMIN_PASSWORD	Strong password (used on first seed only)
+KHPAY_BASE_URL	https://khpay.site/api/v1
+Step 4 — Initialize production database
+
+From your local machine (with prod DATABASE_URL):
+npx prisma db push
+npm run db:seed
+
+Do this once before first login. If you skip it, you can get errors like public.Settings does not exist.
+Step 5 — Deploy & configure KHPay webhook
+
+	1.	Click Deploy in Vercel — wait for the build to finish
+	2.	In your KHPay dashboard, set webhook URL to:https://your-domain.vercel.app/api/payment/webhook/khpay
+	3.	  
+	4.	Visit https://your-domain.vercel.app/admin/login and sign in with your ADMIN_EMAIL / ADMIN_PASSWORD
+	5.	Go to Admin → Games / Products and configure your catalog
+🎉 You're live.
+
+🧑‍💼 Admin panel
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+🔑 Environment variables
+
+All variables documented in .env.example. The essential ones:
+# Database
+DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
+
+# Auth
+JWT_SECRET="<32+ char random string>"
+ADMIN_EMAIL="admin@rithtopup.com"
+ADMIN_PASSWORD="ChangeMeNow123!"
+
+# KHPay
+KHPAY_BASE_URL="https://khpay.site/api/v1"
+KHPAY_API_KEY=""
+KHPAY_WEBHOOK_SECRET=""
+
+# URLs
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+PUBLIC_APP_URL=""                         # same as NEXT_PUBLIC_BASE_URL in prod
+
+# Dev flag
+PAYMENT_SIMULATION_MODE="true"            # only set true for local simulation
+
+Behavior notes:
+	•	Simulation mode is enabled only when PAYMENT_SIMULATION_MODE=true.
+	•	If simulation is off and KHPAY_API_KEYis missing, order creation fails fast with config error.
+	•	In production keep simulation off and provide real KHPay credentials.
+
+📁 Project structure
+
+app/
+├── (public pages)         /, /games/[slug], /order, /blog, /faq
+├── admin/                 Admin UI (games, orders, banners, ...)
+└── api/
+    ├── orders/            Public order + invoice endpoints
+    ├── payment/           KHPay init, simulate, webhook
+    └── admin/             Protected admin API routes
+components/                Header, Footer, GameCard, TopUpForm, carousel
+lib/
+├── auth.ts                JWT session + bcrypt
+├── payment.ts             KHPay client + simulator
+├── telegram.ts            notifyTelegram()
+├── audit.ts               writeAudit()
+└── prisma.ts              Shared client
+prisma/
+├── schema.prisma          Data model
+└── seed.ts                First admin + demo games
+middleware.ts              /admin/* + /api/admin/* auth gate
+
+
+📜 Scripts
+
+	
+	
+	
+	
+	
+	
+	
+	
+🐛 Troubleshooting
+
+Admin login returns 401 right after deploy
+Admin login shows "JWT_SECRET must be set and at least 32 characters"
+Build/runtime error: "The table public.Settings does not exist"
+KHPay QR expired / webhook never fires
+Checkout redirects to localhost in production
+Free Fire UID check says "Couldn't verify"
+Prisma error on Vercel: "Can't reach database"
+PDF invoice returns 500 on Vercel
+Uploaded images disappear on Vercel
+
+🔒 Security checklist before going live
+
+	•	 Change ADMIN_PASSWORD from the default
+	•	 JWT_SECRET is 32+ random chars, different from any other project
+	•	 PAYMENT_SIMULATION_MODE=false in production
+	•	 KHPAY_WEBHOOK_SECRET matches the one configured in KHPay dashboard
+	•	 Custom domain set in Vercel with HTTPS enforced
+	•	 .env is not committed (verify with git ls-files | grep .env)
+	•	 Admin users are created via the seed script, not hardcoded
